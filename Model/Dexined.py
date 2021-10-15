@@ -1,12 +1,12 @@
 import keras.optimizers
-from keras.layers import Conv2D, MaxPool2D
+from keras.layers import Conv2D, MaxPool2D, Conv2DTranspose
 from keras.layers import BatchNormalization, add
 from keras.activations import relu
 
 
 class dexined_model():
 
-    def __init__(self, input_shape):
+    def __init__(self, input_shape=(320, 320, 3)):
         self.input_shape = input_shape
 
     def create_model(self):
@@ -128,3 +128,58 @@ class dexined_model():
         model = keras.Model(inputs=input_image, outputs=block6_xcp)
 
         return model
+
+    def branch_layers(self, inputs, filters=None, kernel_size=None, strides=(1, 1), name=None,
+                      upscale=None, sub_pixel=False):
+
+        classifier = self.upsample_block(inputs=inputs, filters=filters, kernel_size=kernel_size, strides=strides,
+                                         name=name, upscale=upscale, sub_pixel=sub_pixel)
+
+        return classifier
+
+    def upsample_block(self, inputs, filters=None, kernel_size=None, strides=(1, 1),
+                       name=None, upscale=None, sub_pixel=False):
+
+        i = 1
+        scale = 2
+        sub_net = inputs
+        output_filters = 16
+
+        if not sub_pixel:
+            while scale <= upscale:
+                if scale == upscale:
+
+                    sub_net = Conv2D(filters=filters, kernel_size=kernel_size, strides=strides,
+                                     name=name + "_conv_{}".format(i))(sub_net)
+                    sub_net = relu(sub_net)
+
+                    sub_net = Conv2DTranspose(sub_net, filters=filters, kernel_size=(upscale, upscale),
+                                              padding='SAME', strides=(2, 2),
+                                              name=name + "_deconv_{}_{}".format(upscale, i))(sub_net)
+
+                else:
+                    sub_net = Conv2D(filters=output_filters, kernel_size=kernel_size, strides=strides,
+                                     name=name + "_conv_{}".format(i))(sub_net)
+                    sub_net = relu(sub_net)
+
+                    sub_net = Conv2DTranspose(sub_net, filters=output_filters, kernel_size=(upscale, upscale),
+                                              strides=(2, 2), padding='SAME',
+                                              name=name + "_deconv_{}_{}".format(upscale, i))(sub_net)
+
+                i += 1
+                scale = 2**i
+
+        elif sub_pixel is None:
+            while scale <= upscale:
+                if scale == upscale:
+                    current_shape = sub_net.get_shape().as_list()
+                    sub_net = Conv2D(filters=1, kernel_size=3, strides=strides,
+                                     name=name + "_conv_{}".format(i))(sub_net)
+                    sub_net = relu(sub_net)
+                    if not(current_shape[0] == self.input_shape[0] and current_shape[1] == self.input_shape[1]):
+                        sub_net = self.upscore_layer(input=sub_net, n_outputs=output_filters, stride=upscale,
+                                                     k_size=upscale, name=name + '_bdconv_{}'.format(i))
+                i += 1
+                scale = 2**i
+
+        return sub_net
