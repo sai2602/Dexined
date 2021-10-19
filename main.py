@@ -11,4 +11,4 @@ if __name__ == '__main__':
     X_train, Y_train, X_test, Y_test = get_train_test_data(args.data_dir)
     if args.model_state == 'train':
         train_model(my_model, X_train, Y_train, X_test, Y_test, batch_size=args.batch_size, epochs=args.epochs,
-                    save_dir=args.save_dir)
+                    save_dir=args.save_model_dir)

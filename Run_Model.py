@@ -4,16 +4,24 @@ from os import listdir, mkdir
 from os.path import join, exists
 from utls.losses import *
 from keras.callbacks import ModelCheckpoint
+from keras.models import load_model
 
 
-def predict(prediction_model):
-    image = cv.imread("C:\\Users\\saipa\\Desktop\\Dexined\\Dexined\\"
-                      "Data\\BIPED\\BIPED\\edges\\imgs\\train\\rgbr\\real\\RGB_001.jpg")
-    image = np.expand_dims(image, axis=0)
-    pred = prediction_model.predict(image)
-    pred = tf.nn.sigmoid(pred)
-    pred = np.array(pred)
-    cv.imwrite("C:\\Users\\saipa\\Desktop\\Pred.png", pred[0]*255)
+def predict(model_path, predict_data, results_dir):
+    loaded_model = load_model(model_path)
+    predictions = loaded_model(predict_data)
+    np_predictions = np.array(predictions)
+
+    if not exists(results_dir):
+        mkdir(results_dir)
+
+    total_files = np_predictions.shape[0]
+    for index in range(total_files):
+        print("Working on file {} of {}".format(index+1, total_files))
+        pred = np.squeeze(np_predictions[index])
+        file_name = 'pred_' + str(index+1)
+        save_file = join(results_dir, file_name)
+        cv.imwrite(save_file, pred*255.0)
 
 
 def get_train_test_data(data_dir):
