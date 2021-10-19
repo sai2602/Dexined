@@ -12,3 +12,5 @@ if __name__ == '__main__':
     if args.model_state == 'train':
         train_model(my_model, X_train, Y_train, X_test, Y_test, batch_size=args.batch_size, epochs=args.epochs,
                     save_dir=args.save_model_dir)
+    else:
+        predict(args.saved_model, X_test, args.save_results_dir)

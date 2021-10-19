@@ -9,15 +9,18 @@ from keras.models import load_model
 
 def predict(model_path, predict_data, results_dir):
     loaded_model = load_model(model_path)
+    print("Loaded model successfully!!!\n")
+    print("Working on predictions!!!\n")
     predictions = loaded_model(predict_data)
     np_predictions = np.array(predictions)
+    print("Predictions done!!!\n")
 
     if not exists(results_dir):
         mkdir(results_dir)
 
     total_files = np_predictions.shape[0]
     for index in range(total_files):
-        print("Working on file {} of {}".format(index+1, total_files))
+        print("Working on file {} of {}\n".format(index+1, total_files))
         pred = np.squeeze(np_predictions[index])
         file_name = 'pred_' + str(index+1)
         save_file = join(results_dir, file_name)
