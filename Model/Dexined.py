@@ -1,12 +1,12 @@
 import keras.optimizers
-from keras.layers import Conv2D, MaxPool2D, Conv2DTranspose
+from keras.layers import Conv2D, MaxPool2D, Conv2DTranspose, Activation
 from keras.layers import BatchNormalization, add
 from keras.activations import relu
 import tensorflow as tf
 import numpy as np
 
 
-class dexined_model():
+class dexined_model:
 
     def __init__(self, input_shape=(320, 320, 3)):
         self.input_shape = input_shape
@@ -23,23 +23,25 @@ class dexined_model():
         conv_1_2 = relu(conv_1_2)
 
         # ######################################### create output1 data with side layer function
-        output1 = self.branch_layers(conv_1_2, name='output1', filters=1, upscale=int(2**1), strides=(1, 1),
+        output1 = self.branch_layers(conv_1_2, name='output_1', filters=1, upscale=int(2**1), strides=(1, 1),
                                      kernel_size=(1, 1), sub_pixel=True)
 
         rconv1 = Conv2D(filters=128, kernel_size=(1, 1), strides=(2, 2), padding='SAME', name="rconv1")(conv_1_2)
 
-        block2_xcp = Conv2D(filters=128, kernel_size=(3, 3), padding='SAME', strides=(1, 1), name="conv_block2_1")(conv_1_2)
+        block2_xcp = Conv2D(filters=128, kernel_size=(3, 3), padding='SAME', strides=(1, 1),
+                            name="conv_block2_1")(conv_1_2)
         block2_xcp = BatchNormalization()(block2_xcp)
         block2_xcp = relu(block2_xcp)
 
-        block2_xcp = Conv2D(filters=128, kernel_size=(3, 3), padding='SAME', strides=(1, 1), name="conv2_block2_1")(block2_xcp)
+        block2_xcp = Conv2D(filters=128, kernel_size=(3, 3), padding='SAME', strides=(1, 1),
+                            name="conv2_block2_1")(block2_xcp)
         block2_xcp = BatchNormalization()(block2_xcp)
 
         maxpool2_1 = MaxPool2D(pool_size=(3, 3), strides=2, padding='SAME')(block2_xcp)
         add2_1 = add([maxpool2_1, rconv1])
 
         # ######################################### create output2 data with side layer function
-        output2 = self.branch_layers(block2_xcp, name='output2', filters=1, upscale=int(2 ** 1), strides=(1, 1),
+        output2 = self.branch_layers(block2_xcp, name='output_2', filters=1, upscale=int(2 ** 1), strides=(1, 1),
                                      kernel_size=(1, 1), sub_pixel=True)
 
         rconv2 = Conv2D(filters=256, kernel_size=(1, 1), strides=(2, 2), padding='SAME', name="rconv2")(add2_1)
@@ -65,10 +67,11 @@ class dexined_model():
         rconv3 = Conv2D(filters=512, kernel_size=(1, 1), strides=(2, 2), padding='SAME', name="rconv3")(add3_1)
         rconv3 = BatchNormalization()(rconv3)
         # ######################################### create output3 data with side layer function
-        output3 = self.branch_layers(block3_xcp, name='output3', filters=1, upscale=int(2 ** 2), strides=(1, 1),
+        output3 = self.branch_layers(block3_xcp, name='output_3', filters=1, upscale=int(2 ** 2), strides=(1, 1),
                                      kernel_size=(1, 1), sub_pixel=True)
 
-        conv_b2b4 = Conv2D(filters=256, kernel_size=(1, 1), strides=(2, 2), padding='SAME', name="conv_b2b4")(maxpool2_1)
+        conv_b2b4 = Conv2D(filters=256, kernel_size=(1, 1), strides=(2, 2), padding='SAME',
+                           name="conv_b2b4")(maxpool2_1)
         block4_xcp = add3_1
         add_b2b3 = add([conv_b2b4, maxpool3_1])
         addb3_4b4 = Conv2D(filters=512, kernel_size=(1, 1), padding='SAME', strides=(1, 1), name="addb3_4b4")(add_b2b3)
@@ -92,10 +95,11 @@ class dexined_model():
         rconv4 = Conv2D(filters=512, kernel_size=(1, 1), padding='SAME', strides=(1, 1), name="rconv4")(add4_1)
         rconv4 = BatchNormalization()(rconv4)
         # ######################################### create output4 data with side layer function
-        output4 = self.branch_layers(block4_xcp, name='output4', filters=1, upscale=int(2 ** 3), strides=(1, 1),
+        output4 = self.branch_layers(block4_xcp, name='output_4', filters=1, upscale=int(2 ** 3), strides=(1, 1),
                                      kernel_size=(1, 1), sub_pixel=True)
 
-        convb3_2ab4 = Conv2D(filters=512, kernel_size=(1, 1), strides=(2, 2), padding='SAME', name="conv_b2b5")(conv_b2b4)
+        convb3_2ab4 = Conv2D(filters=512, kernel_size=(1, 1), strides=(2, 2), padding='SAME',
+                             name="conv_b2b5")(conv_b2b4)
         block5_xcp = add4_1
         add_b2b5 = add([convb3_2ab4, maxpool4_1])
         add_b2b5 = Conv2D(filters=512, kernel_size=(1, 1), padding='SAME', strides=(1, 1), name="add_b2b5")(add_b2b5)
@@ -115,7 +119,7 @@ class dexined_model():
 
         add5_1 = add([block5_xcp, rconv4])
         # ######################################### create output5 data with side layer function
-        output5 = self.branch_layers(block5_xcp, name='output5', filters=1, upscale=int(2 ** 4), strides=(1, 1),
+        output5 = self.branch_layers(block5_xcp, name='output_5', filters=1, upscale=int(2 ** 4), strides=(1, 1),
                                      kernel_size=(1, 1), sub_pixel=True)
 
         block6_xcp = Conv2D(filters=256, kernel_size=(1, 1), padding='SAME', strides=(1, 1), name="conv0_b6")(add5_1)
@@ -132,21 +136,32 @@ class dexined_model():
             block6_xcp = relu(block6_xcp)
 
             block6_xcp = Conv2D(filters=256, kernel_size=(3, 3),
-                                strides=(1, 1), padding='SAME', name="conv2_block6_{}".format(k + 1))(block5_xcp)
+                                strides=(1, 1), padding='SAME', name="conv2_block6_{}".format(k + 1))(block6_xcp)
             block6_xcp = BatchNormalization()(block6_xcp)
             block6_xcp = add([block6_xcp, addb25_2b6])/2
         # ######################################### create output6 data with side layer function
-        output6 = self.branch_layers(block6_xcp, name='output6', filters=1, upscale=int(2 ** 4), strides=(1, 1),
+        output6 = self.branch_layers(block6_xcp, name='output_6', filters=1, upscale=int(2 ** 4), strides=(1, 1),
                                      kernel_size=(1, 1), sub_pixel=True)
+
+        # ##########################################################################################################
+        # ############################# Own activations for reading outputs ########################################
+        # Keras model compile loss function maps the activation names to loss method. Make sure name in 'Activation'
+        # and name in model.compile(loss...) is the same. Compile defined in Run_Model.py
+        output1 = Activation('sigmoid', name='output1')(output1)
+        output2 = Activation('sigmoid', name='output2')(output2)
+        output3 = Activation('sigmoid', name='output3')(output3)
+        output4 = Activation('sigmoid', name='output4')(output4)
+        output5 = Activation('sigmoid', name='output5')(output5)
+        output6 = Activation('sigmoid', name='output6')(output6)
 
         branched_outputs = [output1, output2, output3, output4, output5, output6]
         fuse = Conv2D(filters=1, kernel_size=(1, 1), name='fuse_1', strides=(1, 1),
                       padding='SAME')(tf.concat(branched_outputs, axis=3))
+        fuse = Activation('sigmoid', name='fuse')(fuse)
 
         final_output = branched_outputs + [fuse]
-        averaged_output = (output1 + output2 + output3 + output4 + output5 + output6 + fuse)/7.0
 
-        model = keras.Model(inputs=input_image, outputs=averaged_output)
+        model = keras.Model(inputs=input_image, outputs=final_output)
 
         return model
 
@@ -205,28 +220,22 @@ class dexined_model():
 
         return sub_net
 
-    def upscore_layer(self, input, n_outputs, stride=2, k_size=4, name=None, shape=None):
+    def upscore_layer(self, input, n_outputs, stride=2, k_size=4, name=None):
         in_features = input.get_shape().as_list()[3]
         in_shape = tf.shape(input)
-        ot_shape = input.get_shape().as_list()
 
-        h = ((ot_shape[1] - 1) * stride) + 1
-        w = ((ot_shape[2] - 1) * stride) + 1
         new_shape = [in_shape[0], self.input_shape[0], self.input_shape[1], n_outputs]
         output_shape = tf.stack(new_shape)
         f_shape = [k_size, k_size, n_outputs, in_features]
-
-        num_of_features = (k_size*k_size*in_features)/stride
-        std_dev = (2/num_of_features) ** 0.5
 
         weights = self.get_deconv_filter(f_shape, name=name + '_Wb')
         deconv = tf.nn.conv2d_transpose(input=input, filters=weights, output_shape=output_shape, strides=stride,
                                         padding='SAME', name=name)
 
-
         return deconv
 
-    def get_deconv_filter(self, f_shape, name=''):
+    @staticmethod
+    def get_deconv_filter(f_shape, name=''):
         width = f_shape[0]
         height = f_shape[1]
 
@@ -245,4 +254,3 @@ class dexined_model():
         init = tf.constant_initializer(value=weights)
 
         return tf.compat.v1.get_variable(name=name, initializer=init, shape=weights.shape, dtype=tf.float32)
-
