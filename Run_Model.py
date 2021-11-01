@@ -5,6 +5,14 @@ from os.path import join, exists
 from utls.losses import *
 from keras.callbacks import ModelCheckpoint
 from keras.models import load_model
+from glob import glob
+
+
+def get_data_shape(data_dir, image_format):
+    search_format = join(data_dir, "**", "*" + image_format)
+    format_files = glob(search_format, recursive=True)
+    image = cv.imread(format_files[0])
+    return image.shape
 
 
 def predict(model_path, predict_data, results_dir):
