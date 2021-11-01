@@ -10,7 +10,7 @@ def configuration():
     parser.add_argument('--image_format', default='.jpg', type=str)
     parser.add_argument('--save_model_dir', default="./Trained_Model", type=str)
     parser.add_argument('--save_results_dir', default="./Results", type=str)
-    parser.add_argument('--model_state', default='train', choices=['train', 'predict'], type=str)
+    parser.add_argument('--model_state', default='predict', choices=['train', 'predict'], type=str)
     parser.add_argument('--saved_model', default="./Trained_Model/Best_Model.h5", type=str)
     args = parser.parse_args()
 

@@ -2,7 +2,6 @@ from Model.Dexined import dexined_model
 from Run_Model import *
 from utls.helpers import *
 
-
 if __name__ == '__main__':
     args = configuration()
     dexined_creator = dexined_model(input_shape=get_data_shape(args.data_dir, args.image_format))

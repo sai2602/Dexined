@@ -7,6 +7,8 @@ from keras.callbacks import ModelCheckpoint
 from keras.models import load_model
 from glob import glob
 
+TOTAL_NUMBER_OF_PREDICTIONS = 7
+
 
 def get_data_shape(data_dir, image_format):
     search_format = join(data_dir, "**", "*" + image_format)
@@ -16,23 +18,46 @@ def get_data_shape(data_dir, image_format):
 
 
 def predict(model_path, predict_data, results_dir):
-    loaded_model = load_model(model_path)
+    loaded_model = load_model(model_path, custom_objects={'cross_entropy_balanced': cross_entropy_balanced,
+                                                          'pixel_error': pixel_error
+                                                          })
     print("Loaded model successfully!!!\n")
     print("Working on predictions!!!\n")
-    predictions = loaded_model(predict_data)
+
+    predictions = loaded_model.predict(predict_data, batch_size=1)
+
     np_predictions = np.array(predictions)
+    print(np_predictions.shape)
     print("Predictions done!!!\n")
 
     if not exists(results_dir):
+        print("Results directory not found. Creating directory!!!\n")
         mkdir(results_dir)
 
-    total_files = np_predictions.shape[0]
+    total_files = np_predictions.shape[1]
     for index in range(total_files):
-        print("Working on file {} of {}\n".format(index+1, total_files))
-        pred = np.squeeze(np_predictions[index])
-        file_name = 'pred_' + str(index+1)
-        save_file = join(results_dir, file_name)
-        cv.imwrite(save_file, pred*255.0)
+        prediction_dir = join(results_dir, "Pred_" + str(index+1))
+        if not exists(prediction_dir):
+            mkdir(prediction_dir)
+
+        print("Working on file {} of {}".format(index+1, total_files))
+        averaged_output = 0
+        for output in range(TOTAL_NUMBER_OF_PREDICTIONS):
+            current_output = np_predictions[output][index]
+            pred = np.squeeze(current_output)
+
+            if output != TOTAL_NUMBER_OF_PREDICTIONS - 1:
+                interim_file_name = "output_" + str(output+1) + ".png"
+            else:
+                interim_file_name = "fuse.png"
+            save_file = join(prediction_dir, interim_file_name)
+            cv.imwrite(save_file, pred * 255.0)
+
+            averaged_output += pred
+        averaged_output /= 7.0
+        file_name = "averaged.png"
+        save_file = join(prediction_dir, file_name)
+        cv.imwrite(save_file, averaged_output*255.0)
 
 
 def get_train_test_data(data_dir):
